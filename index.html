@@ -1,0 +1,1306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Key Signature Ladder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/vexflow@4.2.2/build/cjs/vexflow.js"></script>
+<style>
+  :root{
+    --ink:#1C2B39;
+    --ink-soft:#3B4C5C;
+    --parchment:#EDE6D6;
+    --parchment-dim:#E2D9C4;
+    --panel:#FAF7EF;
+    --brass:#B08D57;
+    --brass-dim:#D9C6A0;
+    --sage:#5F8464;
+    --sage-dim:#CFE0D2;
+    --brick:#AE5340;
+    --brick-dim:#EFD2CC;
+    --line:#CFC4A8;
+    --shadow: 0 2px 10px rgba(28,43,57,0.08);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--parchment);
+    color:var(--ink);
+    font-family:'Work Sans', system-ui, sans-serif;
+    min-height:100vh;
+  }
+  .staff-lines-bg{
+    background-image: repeating-linear-gradient(
+      to bottom,
+      transparent 0px, transparent 38px,
+      rgba(28,43,57,0.05) 38px, rgba(28,43,57,0.05) 39px
+    );
+  }
+  header{
+    padding:22px 28px 14px;
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:10px;
+    border-bottom:1px solid var(--line);
+  }
+  h1{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size:26px;
+    margin:0;
+    letter-spacing:-0.01em;
+  }
+  h1 span{color:var(--brass);}
+  .tagline{font-size:13px;color:var(--ink-soft);margin-top:2px;}
+  .headerRight{display:flex;align-items:center;gap:14px;}
+  .modeBadge{padding:6px 13px;border-radius:20px;background:var(--brass-dim);color:var(--ink);font-size:12.5px;font-weight:700;}
+  select, .btn, input[type=text]{
+    font-family:'Work Sans', sans-serif;
+  }
+  select{
+    padding:7px 10px;
+    border-radius:6px;
+    border:1px solid var(--line);
+    background:var(--panel);
+    color:var(--ink);
+    font-size:14px;
+  }
+  nav.tabs{
+    display:flex;
+    gap:4px;
+    padding:12px 28px 0;
+  }
+  nav.tabs button{
+    background:none;
+    border:none;
+    font-family:'Work Sans', sans-serif;
+    font-size:14px;
+    font-weight:600;
+    color:var(--ink-soft);
+    padding:10px 16px;
+    cursor:pointer;
+    border-bottom:3px solid transparent;
+    border-radius:6px 6px 0 0;
+  }
+  nav.tabs button.active{
+    color:var(--ink);
+    border-bottom-color:var(--brass);
+    background:var(--panel);
+  }
+  nav.tabs button:disabled{color:#B8AF9A;cursor:not-allowed;}
+  main{padding:24px 28px 60px;max-width:1180px;margin:0 auto;}
+  .layout{display:grid;grid-template-columns:1.5fr 1fr;gap:22px;align-items:start;}
+  @media (max-width:880px){.layout{grid-template-columns:1fr;}}
+  .card{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:22px;
+    box-shadow:var(--shadow);
+  }
+  .cardTitle{
+    font-family:'Fraunces', serif;
+    font-size:18px;
+    font-weight:600;
+    margin:0 0 14px;
+  }
+  .prompt{text-align:center;color:var(--ink-soft);font-size:14px;margin-bottom:6px;}
+  .feedbackRow{
+    min-height:22px;
+    text-align:center;
+    font-size:13.5px;
+    font-weight:600;
+    margin-top:12px;
+  }
+  .feedbackRow.correct{color:var(--sage);}
+  .feedbackRow.incorrect{color:var(--brick);}
+  .statsRow{
+    display:flex;gap:18px;flex-wrap:wrap;
+    margin-top:18px;
+    padding-top:14px;
+    border-top:1px solid var(--line);
+    font-size:13px;
+    color:var(--ink-soft);
+  }
+  .statsRow b{color:var(--ink);font-size:15px;display:block;font-family:'Fraunces',serif;}
+  .toast{
+    position:fixed;bottom:22px;left:50%;transform:translateX(-50%);
+    background:var(--ink);color:var(--panel);
+    padding:11px 20px;border-radius:8px;font-size:14px;font-weight:600;
+    box-shadow:0 6px 18px rgba(0,0,0,0.25);
+    opacity:0;transition:opacity .25s ease, transform .25s ease;
+    pointer-events:none;
+    z-index:50;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(-6px);}
+  /* Arc / circle of fifths progress */
+  .arcLegend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--ink-soft);margin-top:10px;}
+  .legendDot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:middle;}
+  .keyChip{
+    font-size:11.5px;font-weight:700;
+  }
+  .keyChip.locked{fill:none;}
+  /* Settings form */
+  .formRow{margin-bottom:16px;}
+  .formRow label{display:block;font-size:13px;font-weight:600;margin-bottom:6px;}
+  .formRow .hint{font-weight:400;color:var(--ink-soft);font-size:12px;margin-top:4px;}
+  .toggleGroup{display:flex;gap:8px;flex-wrap:wrap;}
+  .toggleChip{
+    padding:7px 14px;border-radius:20px;border:1.5px solid var(--line);
+    background:#fff;font-size:13px;font-weight:600;cursor:pointer;color:var(--ink-soft);
+  }
+  .toggleChip.on{background:var(--brass);border-color:var(--brass);color:#fff;}
+  input[type=range]{width:100%;accent-color:var(--brass);}
+  input[type=number], input[type=text]{
+    padding:7px 9px;border-radius:6px;border:1px solid var(--line);font-size:14px;width:110px;
+  }
+  .btn{
+    padding:10px 18px;border-radius:8px;border:none;background:var(--ink);color:#fff;
+    font-size:14px;font-weight:600;cursor:pointer;
+  }
+  .btn.secondary{background:none;border:1.5px solid var(--line);color:var(--ink);}
+  .btn.danger{background:none;border:1.5px solid var(--brick);color:var(--brick);}
+  .rangeLabel{display:flex;justify-content:space-between;font-size:12px;color:var(--ink-soft);}
+  .sectionDivider{border:none;border-top:1px solid var(--line);margin:22px 0;}
+  .assessBanner{
+    text-align:center;padding:40px 20px;
+  }
+  .assessBanner .big{font-family:'Fraunces',serif;font-size:22px;margin-bottom:6px;}
+  #assessTimer{
+    font-family:'Fraunces',serif;font-size:34px;font-weight:600;text-align:center;margin:6px 0 2px;
+  }
+  #assessTimer.low{color:var(--brick);}
+  .assessMeta{display:flex;justify-content:center;gap:26px;margin-bottom:16px;font-size:13.5px;color:var(--ink-soft);}
+  .resultCard{text-align:center;padding:20px;}
+  .resultCard .verdict{font-family:'Fraunces',serif;font-size:24px;font-weight:600;margin-bottom:8px;}
+  .verdict.pass{color:var(--sage);}
+  .verdict.fail{color:var(--brick);}
+  table.log{width:100%;border-collapse:collapse;font-size:13px;margin-top:12px;}
+  table.log th, table.log td{text-align:left;padding:7px 6px;border-bottom:1px solid var(--line);}
+  table.log th{color:var(--ink-soft);font-weight:600;font-size:12px;}
+  .lockedNote{color:var(--ink-soft);font-size:13.5px;text-align:center;padding:30px 10px;}
+  /* Circle-of-fifths answer wheel */
+  .wheelOuter{display:flex;justify-content:center;margin:10px 0 2px;}
+  .wheelHost{
+    position:relative;
+    width:100%;
+    max-width:520px;
+    aspect-ratio: 1 / 1;
+  }
+  .wheelCenter{
+    position:absolute;
+    line-height:0;
+  }
+  .keyNode{
+    position:absolute;
+    transform:translate(-50%,-50%);
+    width:54px;height:54px;
+    border-radius:50%;
+    border:2px solid var(--line);
+    background:#fff;
+    display:flex;align-items:center;justify-content:center;
+    font-size:13px;
+    font-family:'Work Sans', sans-serif;
+    font-weight:700;
+    cursor:pointer;
+    color:var(--ink);
+    padding:0;
+    transition: transform .1s ease, background .15s ease, border-color .15s ease;
+  }
+  .keyNode.locked{background:transparent;border-style:dashed;color:#B3A98F;cursor:default;}
+  .keyNode.mastered{background:var(--sage-dim);border-color:var(--sage);}
+  .keyNode.active{background:#fff;border-color:var(--brass);}
+  .keyNode.struggling{background:var(--brick-dim);border-color:var(--brick);}
+  .keyNode:not(.locked):hover{transform:translate(-50%,-50%) scale(1.08);}
+  .keyNode.correct{background:var(--sage-dim) !important;border-color:var(--sage) !important;}
+  .keyNode.incorrect{background:var(--brick-dim) !important;border-color:var(--brick) !important;}
+  .keyNode.reveal{outline:2px solid var(--sage);outline-offset:2px;}
+  @media (max-width:600px){
+    .keyNode{width:38px;height:38px;font-size:10.5px;}
+  }
+  /* Assessment fixed key grid (piano-column layout: sharps / naturals / flats) */
+  .assessGrid{
+    display:grid;
+    grid-template-columns:repeat(7, 1fr);
+    grid-auto-rows:1fr;
+    gap:8px;
+    max-width:460px;
+    margin:16px auto 0;
+  }
+  .gridKeyBtn{
+    aspect-ratio:1/1;
+    border-radius:10px;
+    border:1.5px solid var(--line);
+    background:#fff;
+    font-size:13px;
+    font-family:'Work Sans', sans-serif;
+    font-weight:700;
+    cursor:pointer;
+    color:var(--ink);
+    padding:0;
+  }
+  .gridKeyBtn:disabled{cursor:default;}
+  .gridKeyBtn.correct{background:var(--sage-dim);border-color:var(--sage);}
+  .gridKeyBtn.incorrect{background:var(--brick-dim);border-color:var(--brick);}
+  .gridKeyBtn.reveal{outline:2px solid var(--sage);outline-offset:2px;}
+  @media (max-width:600px){
+    .gridKeyBtn{font-size:11px;}
+  }
+</style>
+</head>
+<body class="staff-lines-bg">
+
+<header>
+  <div>
+    <h1>Key Signature <span>Ladder</span></h1>
+    <div class="tagline">Adaptive key-signature drills that grow with each student, toward a goal you set.</div>
+  </div>
+  <div class="headerRight">
+    <span id="modeBadge" class="modeBadge">Major keys</span>
+    <select id="studentSelect"></select>
+    <button class="btn secondary" id="newStudentBtn" style="padding:7px 12px;font-size:13px;">+ Student</button>
+  </div>
+</header>
+
+<nav class="tabs">
+  <button data-tab="practice" class="active">Practice</button>
+  <button data-tab="assess" id="assessTabBtn">Assessment</button>
+  <button data-tab="progress">Progress</button>
+  <button data-tab="settings">Goal Settings</button>
+</nav>
+
+<main>
+
+  <!-- PRACTICE TAB -->
+  <section id="tab-practice" class="tabpane">
+    <div class="card">
+      <p class="cardTitle">Identify the key signature</p>
+      <div class="prompt" id="clefPrompt">Which key is this?</div>
+      <div class="wheelOuter">
+        <div class="wheelHost" id="wheelHost">
+          <div class="wheelCenter" id="staffWrap"></div>
+        </div>
+      </div>
+      <div id="feedbackRow" class="feedbackRow"></div>
+      <div class="statsRow">
+        <div><b id="statPoolSize">–</b>keys unlocked</div>
+        <div><b id="statAccuracy">–</b>accuracy (recent)</div>
+        <div><b id="statStreak">–</b>current streak</div>
+        <div><b id="statAnswered">–</b>answered this session</div>
+      </div>
+      <hr class="sectionDivider">
+      <div class="arcLegend">
+        <span><span class="legendDot" style="background:var(--sage)"></span>Mastered</span>
+        <span><span class="legendDot" style="background:var(--brass)"></span>In practice</span>
+        <span><span class="legendDot" style="background:var(--brick)"></span>Needs review</span>
+        <span><span class="legendDot" style="background:#fff;border:1px dashed var(--line)"></span>Not yet unlocked</span>
+      </div>
+      <div id="nextUpNote" style="font-size:13.5px;color:var(--ink-soft);margin-top:8px;"></div>
+    </div>
+  </section>
+
+  <!-- ASSESSMENT TAB -->
+  <section id="tab-assess" class="tabpane" style="display:none;">
+    <div class="card" id="assessCard">
+      <!-- filled by JS -->
+    </div>
+  </section>
+
+  <!-- PROGRESS TAB -->
+  <section id="tab-progress" class="tabpane" style="display:none;">
+    <div class="card">
+      <p class="cardTitle">Assessment history</p>
+      <table class="log" id="historyTable">
+        <thead><tr><th>Date</th><th>Score</th><th>Time</th><th>Result</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <div id="noHistory" style="color:var(--ink-soft);font-size:13.5px;padding:14px 0;">No assessment attempts yet.</div>
+    </div>
+    <hr class="sectionDivider">
+    <div class="card">
+      <p class="cardTitle">Per-key accuracy</p>
+      <table class="log" id="perKeyTable">
+        <thead><tr><th>Key</th><th>Attempts</th><th>Accuracy</th><th>Status</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <div style="margin-top:14px;">
+        <button class="btn danger" id="resetStudentBtn">Reset this student's progress</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- SETTINGS TAB -->
+  <section id="tab-settings" class="tabpane" style="display:none;">
+    <div class="card">
+      <p class="cardTitle">Set the class goal</p>
+      <p style="font-size:13.5px;color:var(--ink-soft);margin-top:-8px;">These settings apply to every student. Changing them re-scales everyone's current progress to fit the new goal.</p>
+
+      <div class="formRow">
+        <label>Practice mode</label>
+        <div class="toggleGroup">
+          <div class="toggleChip" data-group="practiceMode" data-value="major">Major keys</div>
+          <div class="toggleChip" data-group="practiceMode" data-value="minor">Minor keys</div>
+        </div>
+        <div class="hint">Major and minor are separate goals, tracked separately. The same staff can be correctly named two ways (no sharps/flats is both C major and A minor) — asking for both at once would make the question ambiguous, so a student works one at a time. Switch here once majors are solid.</div>
+      </div>
+
+      <div class="formRow">
+        <label>Clefs</label>
+        <div class="toggleGroup">
+          <div class="toggleChip" data-group="clefs" data-value="treble">Treble</div>
+          <div class="toggleChip" data-group="clefs" data-value="bass">Bass</div>
+        </div>
+      </div>
+
+      <div class="formRow">
+        <label>How far around the circle of fifths?</label>
+        <input type="range" id="maxAccidentals" min="1" max="7" step="1">
+        <div class="rangeLabel"><span>Fewer accidentals</span><span id="maxAccidentalsLabel">up to 7</span></div>
+        <div class="hint">Limits the signature pool to keys with this many sharps/flats or fewer.</div>
+      </div>
+
+      <div class="formRow">
+        <label>Starting pool size</label>
+        <input type="number" id="startSize" min="2" max="8">
+        <div class="hint">How many keys a new student begins practicing at once.</div>
+      </div>
+
+      <hr class="sectionDivider">
+      <p class="cardTitle" style="font-size:15px;">Assessment goal</p>
+      <div class="formRow">
+        <label>Correct identifications</label>
+        <input type="number" id="goalCount" min="5" max="60">
+      </div>
+      <div class="formRow">
+        <label>Time limit (seconds)</label>
+        <input type="number" id="goalTimeSec" min="15" max="1200">
+        <div class="hint">Example: 15 correct in 90 seconds.</div>
+      </div>
+
+      <hr class="sectionDivider">
+      <p class="cardTitle" style="font-size:15px;">How keys are added or removed</p>
+      <div class="formRow">
+        <label>Window size</label>
+        <input type="number" id="windowSize" min="4" max="20">
+        <div class="hint">Number of recent answers used to judge accuracy. This automatically stretches longer as more keys unlock, so a bigger pool needs a longer accurate run before another key is added.</div>
+      </div>
+      <div class="formRow">
+        <label>Minimum tested attempts on the newest key before advancing further</label>
+        <input type="number" id="minNewItemAttempts" min="1" max="10">
+        <div class="hint">Stops the ladder from adding another key before the most recently unlocked one has actually been identified correctly on its own — not just averaged into an overall accuracy.</div>
+      </div>
+      <div class="formRow">
+        <label>Grow when accuracy over the window is at least</label>
+        <input type="number" id="growThreshold" min="50" max="100">%
+      </div>
+      <div class="formRow">
+        <label>...and the current streak is at least</label>
+        <input type="number" id="growStreak" min="1" max="15">
+      </div>
+      <div class="formRow">
+        <label>Shrink when accuracy over the window drops below</label>
+        <input type="number" id="shrinkThreshold" min="10" max="80">%
+      </div>
+
+      <button class="btn" id="saveSettingsBtn">Save goal settings</button>
+      <span id="settingsSaved" style="margin-left:12px;color:var(--sage);font-weight:600;font-size:13.5px;opacity:0;">Saved.</span>
+    </div>
+  </section>
+
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+
+// ---------- Music theory data ----------
+const MAJOR_ORDER = ["C","G","F","D","Bb","A","Eb","E","Ab","B","Db","F#","Gb","C#","Cb"];
+const REL_MINOR = {C:"A",G:"E",F:"D",D:"B",Bb:"G",A:"F#",Eb:"C",E:"C#",Ab:"F",B:"G#",Db:"Bb","F#":"D#",Gb:"Eb","C#":"A#",Cb:"Ab"};
+const ACC_COUNT = {C:0,G:1,F:1,D:2,Bb:2,A:3,Eb:3,E:4,Ab:4,B:5,Db:5,"F#":6,Gb:6,"C#":7,Cb:7};
+// True circle-of-fifths layout, matching standard diagrams: 12 keys evenly
+// spaced around a full circle (C at 12 o'clock, clockwise through sharps),
+// with the three enharmonic-equivalent spellings (Cb, Gb, C#) as smaller
+// nodes just outside their partner (B/Cb, F#/Gb, Db/C#) at the bottom.
+// Every key has one fixed angle + radius — it never moves.
+const CIRCLE_POS = {
+  C:{angle:0,   r:1},
+  G:{angle:30,  r:1},
+  D:{angle:60,  r:1},
+  A:{angle:90,  r:1},
+  E:{angle:120, r:1},
+  B:{angle:150, r:1},
+  "F#":{angle:180, r:1},
+  Db:{angle:210, r:1},
+  Ab:{angle:240, r:1},
+  Eb:{angle:270, r:1},
+  Bb:{angle:300, r:1},
+  F:{angle:330, r:1},
+  Cb:{angle:150, r:1.4},  // enharmonic of B, nested just outside it
+  Gb:{angle:180, r:1.4},  // enharmonic of F#, nested just outside it
+  "C#":{angle:210, r:1.4} // enharmonic of Db, nested just outside it
+};
+const CIRCLE_KEYS = Object.keys(CIRCLE_POS);
+
+const WHEEL_W = 620, WHEEL_H = 620, WHEEL_CX = 310, WHEEL_CY = 310, WHEEL_R = 195;
+function wheelPos(key){
+  const p = CIRCLE_POS[key];
+  const angleRad = p.angle * Math.PI/180;
+  const r = WHEEL_R * p.r;
+  const x = WHEEL_CX + r*Math.sin(angleRad);
+  const y = WHEEL_CY - r*Math.cos(angleRad);
+  return {leftPct: x/WHEEL_W*100, topPct: y/WHEEL_H*100};
+}
+const wheelButtons = {};
+
+// Fixed layout for the assessment grid: piano-column style, matching the
+// reference layout — naturals in the middle row, the two sharp-named major
+// keys above their letter, the flat-named keys below theirs. Keyed by vfKey
+// (the signature identity) so it stays put across major/minor switches;
+// only the button's label text changes with mode.
+const ASSESS_GRID = {
+  "C#":{col:1,row:1}, "F#":{col:4,row:1},
+  C:{col:1,row:2}, D:{col:2,row:2}, E:{col:3,row:2}, F:{col:4,row:2}, G:{col:5,row:2}, A:{col:6,row:2}, B:{col:7,row:2},
+  Cb:{col:1,row:3}, Db:{col:2,row:3}, Eb:{col:3,row:3}, Gb:{col:5,row:3}, Ab:{col:6,row:3}, Bb:{col:7,row:3}
+};
+const assessButtons = {};
+
+
+// A single practice track is always ONE mode (major or minor), never both at
+// once: the same staff (e.g. no sharps/flats) is correctly named two ways
+// (C major / A minor), so mixing modes in one question pool is ambiguous.
+// Major and minor are tracked as two entirely separate ladders per student.
+function buildQueue(mode, maxAcc){
+  const q = [];
+  const keys = MAJOR_ORDER.filter(k => ACC_COUNT[k] <= maxAcc);
+  if (mode === 'major') {
+    keys.forEach(maj => q.push({id:maj+':major', key:maj, mode:'major', label:maj+' major', vfKey:maj}));
+  } else {
+    keys.forEach(maj => {
+      const min = REL_MINOR[maj];
+      q.push({id:min+':minor', key:min, mode:'minor', label:min+' minor', vfKey:maj});
+    });
+  }
+  return q;
+}
+
+// ---------- Persistence ----------
+const LS_SETTINGS = 'ksladder_settings_v2';
+const LS_STUDENTS = 'ksladder_students_v1';
+const LS_STUDENT_PREFIX = 'ksladder_student_v2_';
+
+const DEFAULT_SETTINGS = {
+  practiceMode: 'major', // 'major' or 'minor' — the two are separate goals
+  clefs: ['treble','bass'],
+  maxAccidentals: 7,
+  startSize: 3,
+  windowSize: 8,
+  growThreshold: 85,
+  growStreak: 4,
+  shrinkThreshold: 55,
+  coolDownLen: 4,
+  goalCount: 15,
+  goalTimeSec: 90,
+  minNewItemAttempts: 3
+};
+
+function loadSettings(){
+  try{
+    const raw = localStorage.getItem(LS_SETTINGS);
+    if(!raw) return Object.assign({}, DEFAULT_SETTINGS);
+    return Object.assign({}, DEFAULT_SETTINGS, JSON.parse(raw));
+  }catch(e){ return Object.assign({}, DEFAULT_SETTINGS); }
+}
+function saveSettings(s){ localStorage.setItem(LS_SETTINGS, JSON.stringify(s)); }
+
+function loadStudentList(){
+  try{
+    const raw = localStorage.getItem(LS_STUDENTS);
+    return raw ? JSON.parse(raw) : [];
+  }catch(e){ return []; }
+}
+function saveStudentList(list){ localStorage.setItem(LS_STUDENTS, JSON.stringify(list)); }
+
+// Each student has a fully separate progress ladder per mode, so switching
+// from major to minor practice never touches or resets major progress.
+function defaultModeState(){
+  return {
+    poolSize: null, // set on first use based on settings.startSize
+    history: [],
+    perItemStats: {}, // id -> {correct, total}
+    streak: 0,
+    coolDown: 0,
+    assessments: [],
+    sessionAnswered: 0
+  };
+}
+function defaultStudentState(){
+  return { major: defaultModeState(), minor: defaultModeState() };
+}
+function loadStudent(name){
+  try{
+    const raw = localStorage.getItem(LS_STUDENT_PREFIX+name);
+    const parsed = raw ? JSON.parse(raw) : {};
+    const s = {
+      major: Object.assign(defaultModeState(), parsed.major || {}),
+      minor: Object.assign(defaultModeState(), parsed.minor || {})
+    };
+    ['major','minor'].forEach(m=>{
+      if (s[m].poolSize == null) s[m].poolSize = state.settings.startSize;
+      if (!s[m].perItemStats) s[m].perItemStats = {};
+      if (!s[m].assessments) s[m].assessments = [];
+      s[m].sessionAnswered = 0;
+    });
+    return s;
+  }catch(e){ return defaultStudentState(); }
+}
+function saveStudent(name, s){
+  localStorage.setItem(LS_STUDENT_PREFIX+name, JSON.stringify(s));
+}
+
+// ---------- Global state ----------
+const state = {
+  settings: loadSettings(),
+  students: loadStudentList(),
+  currentStudent: null,
+  studentState: null,
+  queue: [],
+  currentQ: null,
+  answered: false,
+  assessRunning: false,
+  assessTimer: null,
+  assessData: null
+};
+
+state.queue = buildQueue(state.settings.practiceMode, state.settings.maxAccidentals);
+clampPool();
+
+// The active mode's progress object — major and minor practice never share state.
+function sub(){ return state.studentState[state.settings.practiceMode]; }
+
+function clampPool(){
+  if(!state.studentState) return;
+  // major and minor queues are always the same length (one item per included
+  // signature), so a single queue length clamps both.
+  const len = state.queue.length;
+  ['major','minor'].forEach(m=>{
+    if (state.studentState[m] && state.studentState[m].poolSize > len) state.studentState[m].poolSize = len;
+  });
+}
+
+// ---------- Student management ----------
+function ensureStudent(){
+  if (state.students.length === 0){
+    const name = prompt("Name the first student to start:", "New Student") || "Student 1";
+    state.students.push(name);
+    saveStudentList(state.students);
+  }
+  if (!state.currentStudent) state.currentStudent = state.students[0];
+  switchStudent(state.currentStudent);
+}
+
+function switchStudent(name){
+  state.currentStudent = name;
+  state.studentState = loadStudent(name);
+  clampPool();
+  renderStudentSelect();
+  refreshAll();
+}
+
+function renderStudentSelect(){
+  const sel = document.getElementById('studentSelect');
+  sel.innerHTML = '';
+  state.students.forEach(n=>{
+    const o = document.createElement('option');
+    o.value = n; o.textContent = n;
+    if (n === state.currentStudent) o.selected = true;
+    sel.appendChild(o);
+  });
+}
+
+document.getElementById('studentSelect').addEventListener('change', e=>{
+  switchStudent(e.target.value);
+});
+document.getElementById('newStudentBtn').addEventListener('click', ()=>{
+  const name = prompt("Student name:");
+  if (!name) return;
+  if (state.students.includes(name)){ switchStudent(name); return; }
+  state.students.push(name);
+  saveStudentList(state.students);
+  switchStudent(name);
+});
+
+// ---------- Tabs ----------
+document.querySelectorAll('nav.tabs button[data-tab]').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    if (btn.disabled) return;
+    document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.tabpane').forEach(p=>p.style.display='none');
+    document.getElementById('tab-'+btn.dataset.tab).style.display='block';
+    if (btn.dataset.tab === 'progress') renderProgressTab();
+    if (btn.dataset.tab === 'settings') renderSettingsTab();
+    if (btn.dataset.tab === 'assess') renderAssessTab();
+    if (btn.dataset.tab === 'practice') nextQuestion();
+  });
+});
+
+// ---------- Toast ----------
+let toastTimer = null;
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove('show'), 2600);
+}
+
+// ---------- VexFlow rendering ----------
+// Fixed logical canvas with the staff's middle line exactly at half the
+// height, so centering this element in a box always centers the staff
+// (not just the top of the clef) — and tall enough that the clef curl and
+// low accidentals never get clipped by the SVG's own viewBox.
+const STAFF_BASE_W = 230, STAFF_BASE_H = 176, STAFF_Y = 68, STAFF_X = 8, STAFF_W = 214;
+function renderStaff(containerEl, clef, vfKey){
+  const k = window.innerWidth < 600 ? 0.7 : 1;
+  containerEl.innerHTML = '';
+  const VF = Vex.Flow;
+  const renderer = new VF.Renderer(containerEl, VF.Renderer.Backends.SVG);
+  renderer.resize(STAFF_BASE_W*k, STAFF_BASE_H*k);
+  const context = renderer.getContext();
+  context.scale(k, k);
+  const stave = new VF.Stave(STAFF_X, STAFF_Y, STAFF_W);
+  stave.addClef(clef);
+  stave.addKeySignature(vfKey);
+  stave.setContext(context).draw();
+  return k;
+}
+
+// Places the staff hub by exact pixel math rather than trusting the
+// browser to shrink-wrap an inline SVG for a CSS transform: reads the
+// wheel's actual on-screen size, works out where (WHEEL_CX, WHEEL_CY)
+// falls in real pixels, and sets the hub's top-left corner so the staff's
+// middle line — not just the div's box — lands exactly on that point
+// (the same horizontal line that passes through the Eb and A nodes).
+function positionStaffHub(k){
+  const host = document.getElementById('wheelHost');
+  const wrap = document.getElementById('staffWrap');
+  if (!host || !wrap) return;
+  const rect = host.getBoundingClientRect();
+  if (!rect.width) return; // not laid out (e.g. tab hidden) — skip until it is
+  const pxPerUnitX = rect.width / WHEEL_W;
+  const pxPerUnitY = rect.height / WHEEL_H;
+  const cxPx = WHEEL_CX * pxPerUnitX;
+  const cyPx = WHEEL_CY * pxPerUnitY;
+  const svgW = STAFF_BASE_W * k;
+  const middleLineLocalY = (STAFF_Y + 20) * k; // 20 = half the 5-line staff's span
+  wrap.style.left = (cxPx - svgW/2) + 'px';
+  wrap.style.top = (cyPx - middleLineLocalY) + 'px';
+}
+
+// ---------- Practice question flow ----------
+function activeItems(){
+  return state.queue.slice(0, sub().poolSize);
+}
+
+function pickItem(excludeId, weightByRecency){
+  if (weightByRecency === undefined) weightByRecency = true;
+  const items = activeItems();
+  const poolSize = items.length;
+  const masteryThresh = state.settings.growThreshold/100;
+  const weights = items.map((it, idx)=>{
+    const st = sub().perItemStats[it.id];
+    const total = st ? st.total : 0;
+    const acc = total ? st.correct/total : 0;
+    const mastered = total >= 5 && acc >= masteryThresh;
+    let w;
+    if (mastered){
+      // Mastered keys drop to an occasional review slot regardless of age —
+      // this is what keeps them from crowding out keys still being learned.
+      w = 0.5;
+    } else {
+      // Not yet mastered — stays in heavy rotation. Among several
+      // not-yet-mastered keys, lean mildly toward the most recently
+      // unlocked one so a perfect run reaches mastery roughly in the
+      // order keys were added, without starving an older key that's
+      // still shaky.
+      w = 6 + (1-acc)*4;
+      if (weightByRecency && poolSize > 1){
+        const recency = idx/(poolSize-1); // 0 oldest .. 1 newest
+        w *= (0.75 + 0.5*recency);
+      }
+      if (total === 0) w *= 1.3; // brand-new keys get a small extra push
+    }
+    if (it.id === excludeId) w *= 0.35; // avoid immediate repeats
+    return w;
+  });
+  const total = weights.reduce((a,b)=>a+b,0);
+  let r = Math.random()*total;
+  for (let i=0;i<items.length;i++){
+    r -= weights[i];
+    if (r<=0) return items[i];
+  }
+  return items[items.length-1];
+}
+
+function pickClef(){
+  const c = state.settings.clefs;
+  if (c.length === 2) return Math.random()<0.5 ? 'treble' : 'bass';
+  return c[0] || 'treble';
+}
+
+function nextQuestion(){
+  if (!state.queue.length){
+    document.getElementById('staffWrap').innerHTML = '<div class="lockedNote">No keys selected — check Goal Settings.</div>';
+    return;
+  }
+  const item = pickItem(state.currentQ ? state.currentQ.item.id : null);
+  const clef = pickClef();
+  state.currentQ = {item, clef};
+  state.answered = false;
+
+  const modeWord = state.settings.practiceMode === 'major' ? 'major' : 'minor';
+  document.getElementById('clefPrompt').textContent = 'Which ' + modeWord + ' key is this? (' + clef + ' clef)';
+  const k = renderStaff(document.getElementById('staffWrap'), clef, item.vfKey);
+  positionStaffHub(k);
+
+  document.getElementById('feedbackRow').textContent = '';
+  document.getElementById('feedbackRow').className = 'feedbackRow';
+
+  updateWheelStates();
+  refreshStatsRow();
+}
+
+function submitAnswer(chosen, chosenKey){
+  if (state.answered) return;
+  state.answered = true;
+  const correct = chosen.id === state.currentQ.item.id;
+
+  Object.values(wheelButtons).forEach(b=>{ if(!b.classList.contains('locked')) b.disabled = true; });
+  const btn = wheelButtons[chosenKey];
+  if (btn) btn.classList.add(correct ? 'correct' : 'incorrect');
+  if (!correct){
+    const correctBtn = wheelButtons[state.currentQ.item.vfKey];
+    if (correctBtn) correctBtn.classList.add('reveal');
+  }
+  const fb = document.getElementById('feedbackRow');
+  fb.textContent = correct ? 'Correct.' : ('Not quite — that was ' + state.currentQ.item.label + '.');
+  fb.className = 'feedbackRow ' + (correct ? 'correct' : 'incorrect');
+
+  recordAnswer(state.currentQ.item, correct);
+  refreshStatsRow();
+
+  setTimeout(nextQuestion, correct ? 650 : 1400);
+}
+
+function recordAnswer(item, correct){
+  const s = sub();
+  s.history.push(correct ? 1 : 0);
+  if (s.history.length > 200) s.history.shift();
+  if (!s.perItemStats[item.id]) s.perItemStats[item.id] = {correct:0,total:0};
+  s.perItemStats[item.id].total++;
+  if (correct) s.perItemStats[item.id].correct++;
+  s.sessionAnswered++;
+
+  if (correct) s.streak++; else s.streak = 0;
+
+  if (s.coolDown > 0){
+    s.coolDown--;
+  } else {
+    // Bigger pools require a longer accurate run before growing further —
+    // otherwise a hot streak on a few easy keys could add new ones without
+    // the newest keys having actually been tested enough on their own.
+    const effectiveWindow = state.settings.windowSize + Math.floor((s.poolSize - state.settings.startSize) * 1.5);
+    const win = s.history.slice(-effectiveWindow);
+    const growThresh = state.settings.growThreshold/100;
+    const shrinkThresh = state.settings.shrinkThreshold/100;
+    if (win.length >= effectiveWindow){
+      const acc = win.reduce((a,b)=>a+b,0) / win.length;
+      const newestItem = state.queue[s.poolSize-1];
+      const newestStat = newestItem ? s.perItemStats[newestItem.id] : null;
+      const newestReady = !!newestItem && !!newestStat &&
+        newestStat.total >= state.settings.minNewItemAttempts &&
+        (newestStat.correct/newestStat.total) >= growThresh;
+      if (s.streak >= state.settings.growStreak && acc >= growThresh && newestReady && s.poolSize < state.queue.length){
+        const unlockCount = pairedStepSize(s.poolSize);
+        s.poolSize = Math.min(s.poolSize + unlockCount, state.queue.length);
+        s.coolDown = state.settings.coolDownLen;
+        s.streak = 0;
+        const unlocked = state.queue.slice(s.poolSize-unlockCount, s.poolSize);
+        showToast('New key unlocked: ' + unlocked.map(u=>u.label).join(' & '));
+      } else if (acc < shrinkThresh && s.poolSize > Math.min(state.settings.startSize, state.queue.length)){
+        const removeCount = pairedStepSize(s.poolSize - 1, true);
+        const floor = Math.min(state.settings.startSize, state.queue.length);
+        s.poolSize = Math.max(s.poolSize - removeCount, floor);
+        s.coolDown = state.settings.coolDownLen;
+        s.streak = 0;
+        showToast('Dialing back to fewer keys for now.');
+      }
+    }
+  }
+  saveStudent(state.currentStudent, state.studentState);
+}
+
+// C# major and Cb major (the two 7-accidental keys) unlock — and, if
+// accuracy drops, get dialed back — together as a single step, rather than
+// one after the other. `atIndex` is the queue index of the item about to be
+// unlocked (growing) or the current last active item (shrinking).
+function pairedStepSize(atIndex, shrinking){
+  const a = state.queue[atIndex];
+  const b = shrinking ? state.queue[atIndex-1] : state.queue[atIndex+1];
+  if (!a || !b) return 1;
+  const keys = [a.vfKey, b.vfKey];
+  if (keys.includes('C#') && keys.includes('Cb')) return 2;
+  return 1;
+}
+
+function refreshStatsRow(){
+  const s = sub();
+  document.getElementById('statPoolSize').textContent = s.poolSize + ' / ' + state.queue.length;
+  const win = s.history.slice(-state.settings.windowSize);
+  const acc = win.length ? Math.round(100*win.reduce((a,b)=>a+b,0)/win.length) : 0;
+  document.getElementById('statAccuracy').textContent = win.length ? acc + '%' : '—';
+  document.getElementById('statStreak').textContent = s.streak;
+  document.getElementById('statAnswered').textContent = s.sessionAnswered;
+
+  const nextItem = state.queue[s.poolSize];
+  const noteEl = document.getElementById('nextUpNote');
+  if (s.poolSize >= state.queue.length){
+    noteEl.textContent = 'All target keys unlocked. Once accuracy holds up, try the Assessment tab.';
+  } else {
+    noteEl.textContent = 'Next up once accuracy holds: ' + nextItem.label + '.';
+  }
+  // Tab stays clickable even when locked — the Assessment pane itself shows
+  // the locked message plus a preview, rather than being unreachable.
+}
+
+// ---------- Progress arc (circle-of-fifths fan) ----------
+function keyStatus(majorKey){
+  // combine stats from major + relative-minor items mapped to this signature, whichever are in the queue
+  const ids = [];
+  state.queue.forEach(it=>{ if (it.vfKey === majorKey) ids.push(it.id); });
+  if (!ids.length) return 'absent';
+  const activeIds = activeItems().map(i=>i.id);
+  const anyActive = ids.some(id=>activeIds.includes(id));
+  if (!anyActive) return 'locked';
+  let correct=0, total=0;
+  ids.forEach(id=>{
+    const st = sub().perItemStats[id];
+    if (st){ correct+=st.correct; total+=st.total; }
+  });
+  if (total >= 5 && correct/total >= 0.85) return 'mastered';
+  if (total >= 3 && correct/total < 0.5) return 'struggling';
+  return 'active';
+}
+
+function renderWheel(){
+  const host = document.getElementById('wheelHost');
+  Array.from(host.querySelectorAll('.keyNode')).forEach(n=>n.remove());
+  // staffWrap's position is set precisely in px by positionStaffHub(),
+  // called right after each renderStaff() — not here.
+
+  CIRCLE_KEYS.forEach(key=>{
+    const pos = wheelPos(key);
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'keyNode';
+    btn.style.left = pos.leftPct + '%';
+    btn.style.top = pos.topPct + '%';
+    btn.addEventListener('click', ()=>onWheelClick(key));
+    host.appendChild(btn);
+    wheelButtons[key] = btn;
+  });
+  updateWheelStates();
+}
+
+function updateWheelStates(){
+  CIRCLE_KEYS.forEach(key=>{
+    const btn = wheelButtons[key];
+    if (!btn) return;
+    const item = state.queue.find(it=>it.vfKey===key);
+    if (!item){ btn.style.display='none'; return; }
+    btn.style.display='flex';
+    const status = keyStatus(key);
+    btn.className = 'keyNode ' + status;
+    btn.disabled = (status === 'locked');
+    btn.textContent = item.key;
+  });
+}
+
+function onWheelClick(key){
+  if (state.answered) return;
+  const btn = wheelButtons[key];
+  if (!btn || btn.disabled) return;
+  const chosenItem = state.queue.find(it=>it.vfKey===key);
+  if (!chosenItem) return;
+  submitAnswer(chosenItem, key);
+}
+
+// ---------- Assessment ----------
+function renderAssessTab(){
+  const card = document.getElementById('assessCard');
+  const s = sub();
+  if (s.poolSize < state.queue.length){
+    card.innerHTML =
+      '<div class="lockedNote">Unlocks once ' + state.currentStudent + ' has all ' + state.queue.length + ' target keys active in Practice.</div>' +
+      '<div style="text-align:center;margin-top:4px;"><button class="btn secondary" id="previewAssessBtn">Preview the assessment screen</button></div>';
+    document.getElementById('previewAssessBtn').addEventListener('click', showAssessPreview);
+    return;
+  }
+  if (state.assessRunning){ return; }
+  card.innerHTML =
+    '<div class="assessBanner">' +
+      '<div class="big">Ready for the timed assessment?</div>' +
+      '<div style="color:var(--ink-soft);font-size:14px;margin-bottom:18px;">Identify ' + state.settings.goalCount + ' key signatures correctly within ' + formatTime(state.settings.goalTimeSec) + '.</div>' +
+      '<button class="btn" id="startAssessBtn">Start assessment</button>' +
+    '</div>';
+  document.getElementById('startAssessBtn').addEventListener('click', startAssessment);
+}
+
+// A non-scored, non-saved look at the assessment screen using the FULL
+// target key set, regardless of how far the current student has actually
+// progressed — so you can see the layout without practicing through it.
+function showAssessPreview(){
+  const card = document.getElementById('assessCard');
+  card.innerHTML =
+    '<div class="prompt" style="margin-bottom:10px;"><em>Preview only — showing all ' + state.queue.length + ' target keys. Nothing here is scored or saved.</em></div>' +
+    '<div id="assessTimer">' + formatTime(state.settings.goalTimeSec) + '</div>' +
+    '<div class="assessMeta"><span>Score: 0 / ' + state.settings.goalCount + '</span></div>' +
+    '<div class="prompt" id="assessPreviewPrompt"></div>' +
+    '<div id="assessStaffWrap" style="display:flex;justify-content:center;"></div>' +
+    '<div class="assessGrid" id="assessGrid"></div>' +
+    '<div style="text-align:center;margin-top:16px;"><button class="btn secondary" id="exitPreviewBtn">Exit preview</button></div>';
+
+  const grid = document.getElementById('assessGrid');
+  Object.keys(ASSESS_GRID).forEach(vfKey=>{
+    const pos = ASSESS_GRID[vfKey];
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'gridKeyBtn';
+    btn.style.gridColumn = pos.col;
+    btn.style.gridRow = pos.row;
+    // Preview always shows the student's full target set for the current
+    // goal settings (buildQueue at the configured max-accidentals), not
+    // whatever pool they've actually unlocked so far.
+    const previewItem = buildQueue(state.settings.practiceMode, state.settings.maxAccidentals).find(it=>it.vfKey===vfKey);
+    if (!previewItem){ btn.style.visibility = 'hidden'; }
+    else { btn.textContent = previewItem.key; btn.disabled = true; }
+    grid.appendChild(btn);
+  });
+
+  const fullQueue = buildQueue(state.settings.practiceMode, state.settings.maxAccidentals);
+  const exampleItem = fullQueue[Math.floor(Math.random()*fullQueue.length)];
+  const clef = pickClef();
+  const modeWord = state.settings.practiceMode === 'major' ? 'major' : 'minor';
+  document.getElementById('assessPreviewPrompt').textContent = 'Which ' + modeWord + ' key is this? (' + clef + ' clef)';
+  renderStaff(document.getElementById('assessStaffWrap'), clef, exampleItem.vfKey);
+
+  document.getElementById('exitPreviewBtn').addEventListener('click', renderAssessTab);
+}
+
+function formatTime(sec){
+  const m = Math.floor(sec/60), s = sec%60;
+  return m + ':' + String(s).padStart(2,'0');
+}
+
+function startAssessment(){
+  state.assessRunning = true;
+  state.assessAnswered = false;
+  state.assessData = { correct:0, total:0, startTime: Date.now(), endTime: null, timeUp:false, lastId:null };
+  setupAssessUI();
+  renderAssessQuestion();
+  tickAssessTimer();
+}
+
+function setupAssessUI(){
+  const card = document.getElementById('assessCard');
+  card.innerHTML =
+    '<div id="assessTimer"></div>' +
+    '<div class="assessMeta"><span id="assessScore"></span></div>' +
+    '<div class="prompt" id="assessPrompt"></div>' +
+    '<div id="assessStaffWrap" style="display:flex;justify-content:center;"></div>' +
+    '<div class="assessGrid" id="assessGrid"></div>';
+
+  const grid = document.getElementById('assessGrid');
+  Object.keys(ASSESS_GRID).forEach(vfKey=>{
+    const pos = ASSESS_GRID[vfKey];
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'gridKeyBtn';
+    btn.style.gridColumn = pos.col;
+    btn.style.gridRow = pos.row;
+    btn.addEventListener('click', ()=>onAssessClick(vfKey));
+    grid.appendChild(btn);
+    assessButtons[vfKey] = btn;
+  });
+}
+
+function updateAssessButtons(){
+  Object.keys(ASSESS_GRID).forEach(vfKey=>{
+    const btn = assessButtons[vfKey];
+    if (!btn) return;
+    const item = state.queue.find(it=>it.vfKey===vfKey);
+    if (!item){ btn.style.visibility = 'hidden'; return; }
+    btn.style.visibility = 'visible';
+    btn.className = 'gridKeyBtn';
+    btn.disabled = false;
+    btn.textContent = item.key;
+  });
+}
+
+function tickAssessTimer(){
+  clearInterval(state.assessTimer);
+  state.assessTimer = setInterval(()=>{
+    const elapsed = (Date.now()-state.assessData.startTime)/1000;
+    const remaining = Math.max(0, state.settings.goalTimeSec - elapsed);
+    const timerEl = document.getElementById('assessTimer');
+    if (timerEl){
+      timerEl.textContent = formatTime(Math.ceil(remaining));
+      timerEl.classList.toggle('low', remaining <= 15);
+    }
+    if (remaining <= 0 && state.assessRunning){
+      state.assessData.timeUp = true;
+      finishAssessment();
+    }
+  }, 200);
+}
+
+function renderAssessQuestion(){
+  const item = pickItem(state.assessData.lastId, false);
+  state.assessData.lastId = item.id;
+  const clef = pickClef();
+  state.assessData.current = {item, clef};
+  const modeWord = state.settings.practiceMode === 'major' ? 'major' : 'minor';
+
+  document.getElementById('assessScore').textContent = 'Score: ' + state.assessData.correct + ' / ' + state.settings.goalCount;
+  document.getElementById('assessPrompt').textContent = 'Which ' + modeWord + ' key is this? (' + clef + ' clef)';
+  renderStaff(document.getElementById('assessStaffWrap'), clef, item.vfKey);
+  updateAssessButtons();
+}
+
+function onAssessClick(vfKey){
+  if (state.assessAnswered) return;
+  const btn = assessButtons[vfKey];
+  if (!btn || btn.disabled) return;
+  const chosenItem = state.queue.find(it=>it.vfKey===vfKey);
+  if (!chosenItem) return;
+  state.assessAnswered = true;
+  assessAnswer(chosenItem, vfKey);
+}
+
+function assessAnswer(chosen, chosenVfKey){
+  const d = state.assessData;
+  const correct = chosen.id === d.current.item.id;
+  d.total++;
+  if (correct) d.correct++;
+  // also feed this into the student's normal per-item stats & history for progress tracking
+  recordAnswerLite(d.current.item, correct);
+
+  Object.values(assessButtons).forEach(b=>{ b.disabled = true; });
+  const btn = assessButtons[chosenVfKey];
+  if (btn) btn.classList.add(correct ? 'correct' : 'incorrect');
+  if (!correct){
+    const correctBtn = assessButtons[d.current.item.vfKey];
+    if (correctBtn) correctBtn.classList.add('reveal');
+  }
+  document.getElementById('assessScore').textContent = 'Score: ' + d.correct + ' / ' + state.settings.goalCount;
+
+  const done = d.correct >= state.settings.goalCount || d.total >= state.settings.goalCount*3;
+  setTimeout(()=>{
+    state.assessAnswered = false;
+    if (!state.assessRunning) return; // timer already ended the assessment
+    if (done){
+      finishAssessment();
+    } else {
+      renderAssessQuestion();
+    }
+  }, correct ? 450 : 900);
+}
+
+function recordAnswerLite(item, correct){
+  const s = sub();
+  if (!s.perItemStats[item.id]) s.perItemStats[item.id] = {correct:0,total:0};
+  s.perItemStats[item.id].total++;
+  if (correct) s.perItemStats[item.id].correct++;
+  saveStudent(state.currentStudent, state.studentState);
+}
+
+function finishAssessment(){
+  if (!state.assessRunning) return; // guards against timer + answer callback both firing
+  clearInterval(state.assessTimer);
+  state.assessRunning = false;
+  const d = state.assessData;
+  const elapsedSec = Math.min(state.settings.goalTimeSec, (Date.now()-d.startTime)/1000);
+  const passed = (d.correct >= state.settings.goalCount) && !d.timeUp;
+
+  const record = {
+    date: new Date().toLocaleString(),
+    correct: d.correct,
+    total: state.settings.goalCount,
+    timeSec: Math.round(elapsedSec),
+    passed
+  };
+  sub().assessments.unshift(record);
+  saveStudent(state.currentStudent, state.studentState);
+
+  const card = document.getElementById('assessCard');
+  card.innerHTML =
+    '<div class="resultCard">' +
+      '<div class="verdict ' + (passed?'pass':'fail') + '">' + (passed ? 'Goal met' : 'Not yet') + '</div>' +
+      '<div style="font-size:15px;color:var(--ink-soft);margin-bottom:18px;">'+d.correct+' correct in '+formatTime(Math.round(elapsedSec))+' (goal: '+state.settings.goalCount+' in '+formatTime(state.settings.goalTimeSec)+')</div>' +
+      '<button class="btn" id="retryAssessBtn">Try again</button>' +
+    '</div>';
+  document.getElementById('retryAssessBtn').addEventListener('click', startAssessment);
+  refreshStatsRow();
+  updateWheelStates();
+}
+
+// ---------- Progress tab ----------
+function renderProgressTab(){
+  const s = sub();
+  const tbody = document.querySelector('#historyTable tbody');
+  tbody.innerHTML = '';
+  document.getElementById('noHistory').style.display = s.assessments.length ? 'none' : 'block';
+  s.assessments.forEach(a=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = '<td>'+a.date+'</td><td>'+a.correct+' / '+a.total+'</td><td>'+formatTime(a.timeSec)+'</td><td style="color:'+(a.passed?'var(--sage)':'var(--brick)')+';font-weight:600;">'+(a.passed?'Passed':'Not yet')+'</td>';
+    tbody.appendChild(tr);
+  });
+
+  const perKeyBody = document.querySelector('#perKeyTable tbody');
+  perKeyBody.innerHTML = '';
+  state.queue.forEach(item=>{
+    const st = s.perItemStats[item.id];
+    const total = st ? st.total : 0;
+    const acc = total ? Math.round(100*st.correct/total) : null;
+    let status = 'Not yet unlocked';
+    if (activeItems().find(i=>i.id===item.id)) status = 'In practice';
+    if (total >= 5 && acc >= 85) status = 'Mastered';
+    if (total >= 3 && acc !== null && acc < 50) status = 'Needs review';
+    const tr = document.createElement('tr');
+    tr.innerHTML = '<td>'+item.label+'</td><td>'+total+'</td><td>'+(acc===null?'—':acc+'%')+'</td><td>'+status+'</td>';
+    perKeyBody.appendChild(tr);
+  });
+}
+
+document.getElementById('resetStudentBtn').addEventListener('click', ()=>{
+  const modeWord = state.settings.practiceMode === 'major' ? 'major-key' : 'minor-key';
+  if (!confirm('Reset ' + modeWord + ' progress for ' + state.currentStudent + '? This cannot be undone. (Their progress in the other mode is untouched.)')) return;
+  state.studentState[state.settings.practiceMode] = defaultModeState();
+  sub().poolSize = state.settings.startSize;
+  saveStudent(state.currentStudent, state.studentState);
+  refreshAll();
+});
+
+// ---------- Settings tab ----------
+function renderSettingsTab(){
+  const st = state.settings;
+  document.querySelectorAll('.toggleChip[data-group=practiceMode]').forEach(c=>{
+    c.classList.toggle('on', c.dataset.value === st.practiceMode);
+  });
+  document.querySelectorAll('.toggleChip[data-group=clefs]').forEach(c=>{
+    c.classList.toggle('on', st.clefs.includes(c.dataset.value));
+  });
+  document.getElementById('maxAccidentals').value = st.maxAccidentals;
+  document.getElementById('maxAccidentalsLabel').textContent = 'up to ' + st.maxAccidentals;
+  document.getElementById('startSize').value = st.startSize;
+  document.getElementById('goalCount').value = st.goalCount;
+  document.getElementById('goalTimeSec').value = st.goalTimeSec;
+  document.getElementById('windowSize').value = st.windowSize;
+  document.getElementById('minNewItemAttempts').value = st.minNewItemAttempts;
+  document.getElementById('growThreshold').value = st.growThreshold;
+  document.getElementById('growStreak').value = st.growStreak;
+  document.getElementById('shrinkThreshold').value = st.shrinkThreshold;
+}
+
+function suggestGoalCount(){
+  const maxAcc = parseInt(document.getElementById('maxAccidentals').value,10);
+  document.getElementById('goalCount').value = MAJOR_ORDER.filter(k=>ACC_COUNT[k]<=maxAcc).length;
+}
+
+document.querySelectorAll('.toggleChip').forEach(chip=>{
+  chip.addEventListener('click', ()=>{
+    const group = chip.dataset.group, val = chip.dataset.value;
+    if (group === 'practiceMode'){
+      // single-select: major and minor are separate goals, never both at once
+      document.querySelectorAll('.toggleChip[data-group=practiceMode]').forEach(c=>c.classList.remove('on'));
+      chip.classList.add('on');
+      suggestGoalCount();
+      return;
+    }
+    const arr = state.settings[group];
+    const idx = arr.indexOf(val);
+    if (idx >= 0){
+      if (arr.length > 1) arr.splice(idx,1); // keep at least one clef selected
+    } else {
+      arr.push(val);
+    }
+    chip.classList.toggle('on');
+  });
+});
+document.getElementById('maxAccidentals').addEventListener('input', e=>{
+  document.getElementById('maxAccidentalsLabel').textContent = 'up to ' + e.target.value;
+  suggestGoalCount();
+});
+
+document.getElementById('saveSettingsBtn').addEventListener('click', ()=>{
+  const st = state.settings;
+  const modeChip = document.querySelector('.toggleChip[data-group=practiceMode].on');
+  st.practiceMode = modeChip ? modeChip.dataset.value : 'major';
+  st.maxAccidentals = parseInt(document.getElementById('maxAccidentals').value,10);
+  st.startSize = parseInt(document.getElementById('startSize').value,10);
+  st.goalCount = parseInt(document.getElementById('goalCount').value,10);
+  st.goalTimeSec = parseInt(document.getElementById('goalTimeSec').value,10);
+  st.windowSize = parseInt(document.getElementById('windowSize').value,10);
+  st.minNewItemAttempts = parseInt(document.getElementById('minNewItemAttempts').value,10);
+  st.growThreshold = parseInt(document.getElementById('growThreshold').value,10);
+  st.growStreak = parseInt(document.getElementById('growStreak').value,10);
+  st.shrinkThreshold = parseInt(document.getElementById('shrinkThreshold').value,10);
+  saveSettings(st);
+
+  state.queue = buildQueue(st.practiceMode, st.maxAccidentals);
+  clampPool();
+  saveStudent(state.currentStudent, state.studentState);
+  updateModeBadge();
+
+  const msg = document.getElementById('settingsSaved');
+  msg.style.opacity = 1;
+  setTimeout(()=>msg.style.opacity=0, 2000);
+  refreshAll();
+});
+
+function updateModeBadge(){
+  document.getElementById('modeBadge').textContent = state.settings.practiceMode === 'major' ? 'Major keys' : 'Minor keys';
+}
+
+// ---------- Init ----------
+function refreshAll(){
+  renderWheel();
+  refreshStatsRow();
+  nextQuestion();
+}
+
+updateModeBadge();
+ensureStudent();
+
+let resizeTimer = null;
+window.addEventListener('resize', ()=>{
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(()=>{
+    const practiceVisible = document.getElementById('tab-practice').style.display !== 'none';
+    if (practiceVisible && state.currentQ){
+      const k = renderStaff(document.getElementById('staffWrap'), state.currentQ.clef, state.currentQ.item.vfKey);
+      positionStaffHub(k);
+    }
+  }, 150);
+});
+
+})();
+</script>
+</body>
+</html>
